@@ -1,0 +1,117 @@
+{
+  "name": "bitchord-connect",
+  "displayName": "BitChord Connect",
+  "description": "Connect VS Code to BitChord Android app via Listen Together — live playback info, queue, controls, and synchronized karaoke lyrics.",
+  "version": "0.1.0",
+  "publisher": "bitchord",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "bitchord-container",
+          "title": "BitChord",
+          "icon": "resources/bitchord-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "bitchord-container": [
+        {
+          "type": "webview",
+          "id": "bitchord.sidebarView",
+          "name": "Listen Together",
+          "icon": "resources/bitchord-icon.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "bitchord.joinParty",
+        "title": "BitChord: Join Party",
+        "category": "BitChord"
+      },
+      {
+        "command": "bitchord.createParty",
+        "title": "BitChord: Create Party",
+        "category": "BitChord"
+      },
+      {
+        "command": "bitchord.leaveParty",
+        "title": "BitChord: Leave Party",
+        "category": "BitChord"
+      },
+      {
+        "command": "bitchord.togglePlayPause",
+        "title": "BitChord: Play / Pause",
+        "category": "BitChord",
+        "icon": "$(play)"
+      },
+      {
+        "command": "bitchord.nextTrack",
+        "title": "BitChord: Next Track",
+        "category": "BitChord",
+        "icon": "$(debug-step-over)"
+      },
+      {
+        "command": "bitchord.previousTrack",
+        "title": "BitChord: Previous Track",
+        "category": "BitChord",
+        "icon": "$(debug-step-back)"
+      },
+      {
+        "command": "bitchord.focusView",
+        "title": "BitChord: Open Listen Together",
+        "category": "BitChord"
+      }
+    ],
+    "configuration": {
+      "title": "BitChord",
+      "properties": {
+        "bitchord.serverUrl": {
+          "type": "string",
+          "default": "https://bitchord-listen-together.onrender.com",
+          "description": "Party server URL for BitChord Listen Together."
+        },
+        "bitchord.displayName": {
+          "type": "string",
+          "default": "VS Code",
+          "description": "Your member display name shown to other devices in the party."
+        },
+        "bitchord.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically reconnect to the previous party if available."
+        },
+        "bitchord.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show currently playing song and controls in the VS Code status bar."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "node esbuild.js --production",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "test": "node ./node_modules/esbuild/bin/esbuild test/suite.test.ts --bundle --platform=node --outfile=dist/suite.test.cjs && node --test dist/suite.test.cjs"
+  },
+  "dependencies": {
+    "@uimaxbai/am-lyrics": "^1.9.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.85.0",
+    "@types/ws": "^8.5.10",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.4.5"
+  }
+}

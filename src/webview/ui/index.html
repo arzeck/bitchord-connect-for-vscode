@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: http: data: {{CSP_SOURCE}}; media-src https: http: http://127.0.0.1:* http://localhost:* data: blob: {{CSP_SOURCE}}; style-src 'unsafe-inline' {{CSP_SOURCE}}; script-src 'unsafe-inline' 'unsafe-eval' {{CSP_SOURCE}}; connect-src https: http: http://127.0.0.1:* http://localhost:* ws: wss:; font-src https: data: {{CSP_SOURCE}};">
+  <title>BitChord Listen Together</title>
+  <style>
+    @font-face {
+      font-family: 'SF Pro Display';
+      src: url('{{FONTS_URI}}/sf_pro_display_regular.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'SF Pro Display';
+      src: url('{{FONTS_URI}}/sf_pro_display_medium.otf') format('opentype');
+      font-weight: 500;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'SF Pro Display';
+      src: url('{{FONTS_URI}}/sf_pro_display_semibold.otf') format('opentype');
+      font-weight: 600;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'SF Pro Display';
+      src: url('{{FONTS_URI}}/sf_pro_display_bold.otf') format('opentype');
+      font-weight: 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'SF Pro Display';
+      src: url('{{FONTS_URI}}/sf_pro_display_heavy.otf') format('opentype');
+      font-weight: 800;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'SF Pro Display';
+      src: url('{{FONTS_URI}}/sf_pro_display_heavy.otf') format('opentype');
+      font-weight: 900;
+      font-style: normal;
+    }
+  </style>
+  <link rel="stylesheet" href="{{STYLES_URI}}">
+</head>
+<body>
+  <!-- Ambient Blurred Artwork Backdrop -->
+  <div id="ambient-backdrop" class="ambient-backdrop"></div>
+  <div class="ambient-overlay"></div>
+
+  <!-- Native Party Audio Element -->
+  <audio id="bitchord-audio" preload="auto" playsinline></audio>
+
+  <div id="app" class="app-container">
+
+    <!-- Global Error Banner -->
+    <div id="error-banner" class="error-banner hidden">
+      <span class="error-icon">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </span>
+      <span id="error-message" class="error-message"></span>
+      <button id="btn-dismiss-error" class="btn-dismiss" title="Dismiss">✕</button>
+    </div>
+
+    <!-- ═══════════════ OFFLINE VIEW ═══════════════ -->
+    <div id="offline-view" class="view-panel">
+      <div class="hero-brand">
+        <div class="logo-circle">
+          <svg viewBox="0 0 24 24" class="brand-svg" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+        <h2 class="hero-title">BitChord</h2>
+        <p class="hero-subtitle">Listen Together companion for VS Code</p>
+      </div>
+
+      <!-- Server Health & Mode Card -->
+      <div class="server-status-card">
+        <div class="server-status-header">
+          <div class="server-health-indicator">
+            <span id="server-dot" class="server-dot checking"></span>
+            <span id="server-health-text" class="server-health-text">Checking server…</span>
+          </div>
+          <button id="btn-recheck-server" class="btn-small" title="Check / Wake server">Recheck</button>
+        </div>
+        <div id="server-url-display" class="server-url-display">https://bitchord-listen-together.onrender.com</div>
+      </div>
+
+      <!-- Local Wi-Fi Server Feature -->
+      <div class="local-server-card">
+        <div class="local-server-row">
+          <div class="local-server-title">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+              <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+              <line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
+            <span>Local Wi-Fi Server</span>
+            <span id="local-server-badge" class="badge-tag">OFF</span>
+          </div>
+          <button id="btn-toggle-local" class="btn-small btn-local">Start Local Server</button>
+        </div>
+        <div id="local-server-instructions" class="local-instructions hidden">
+          <p class="instruct-line">Phone & PC on the same Wi-Fi:</p>
+          <div class="code-copy-box">
+            <code id="local-server-url-code">http://127.0.0.1:8000</code>
+            <button id="btn-use-local" class="btn-tiny" title="Use as Party Server">Use</button>
+          </div>
+          <p class="instruct-sub">In phone app: <em>Settings &rarr; Party Server</em>, enter the URL above.</p>
+        </div>
+      </div>
+
+      <!-- Join / Create Card -->
+      <div class="join-card">
+        <label for="room-code-input" class="input-label">Enter Party Code or Invite Link</label>
+        <div class="input-row">
+          <input 
+            type="text" 
+            id="room-code-input" 
+            placeholder="e.g. 7A9K2M or bitchord://party/..." 
+            maxlength="250" 
+            autocomplete="off" 
+            spellcheck="false" 
+          />
+        </div>
+
+        <div class="button-group">
+          <button id="btn-join" class="btn btn-primary">
+            <span class="btn-icon">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </span>
+            <span>Join Party</span>
+          </button>
+          <button id="btn-create" class="btn btn-secondary">
+            <span class="btn-icon">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                <path d="M12 2l2.4 5.4L20 8.5l-4 4.2 1 6-5-3-5 3 1-6-4-4.2 5.6-1.1L12 2z"/>
+              </svg>
+            </span>
+            <span>Create Party</span>
+          </button>
+        </div>
+
+        <details class="advanced-settings">
+          <summary>Change Party Server URL</summary>
+          <div class="settings-content">
+            <label for="server-url-input">Server Address</label>
+            <input 
+              type="text" 
+              id="server-url-input" 
+              value="https://bitchord-listen-together.onrender.com" 
+              placeholder="https://..."
+            />
+            <div class="server-presets">
+              <button id="btn-preset-official" class="btn-tiny" title="Official Oracle Cloud (Never sleeps)">Official Always-On</button>
+              <button id="btn-preset-default" class="btn-tiny" title="Render Free Tier">Render</button>
+              <button id="btn-preset-local" class="btn-tiny" title="Local PC Server">Local (8000)</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- ═══════════════ CONNECTED VIEW ═══════════════ -->
+    <div id="connected-view" class="view-panel hidden">
+
+      <!-- SCREEN 1: NOW PLAYING PLAYER -->
+      <div id="screen-player" class="screen-view active">
+        <!-- Full-Bleed Edge-to-Edge Hero Artwork -->
+        <div class="hero-art-section">
+          <div id="hero-art-wrapper" class="hero-art-wrapper" title="Click to open lyrics">
+            <img id="track-art" src="" alt="Album Artwork" class="hero-art-img hidden" />
+            <div id="art-placeholder" class="hero-art-placeholder">
+              <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 18V5l12-2v13"></path>
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="16" r="3"></circle>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lower Deck Controls -->
+        <div class="player-lower-deck">
+          <!-- Track Info & Circle Glyphs -->
+          <div class="track-info-section">
+            <div class="track-text">
+              <h2 id="track-title" class="track-title">Waiting for music…</h2>
+              <p id="track-artist" class="track-artist">Play any track in BitChord on your phone</p>
+            </div>
+            <div class="track-actions">
+              <button id="btn-favorite" class="circle-glyph" title="Favorite">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+              </button>
+              <button id="btn-options" class="circle-glyph" title="More options">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <circle cx="5" cy="12" r="2.2"/>
+                  <circle cx="12" cy="12" r="2.2"/>
+                  <circle cx="19" cy="12" r="2.2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Lyric Teaser Bar -->
+          <div id="live-lyric-bar" class="live-lyric-bar" title="Click to view full lyrics">
+            <span id="live-lyric-text" class="live-lyric-text">Tap to view lyrics</span>
+            <span class="lyric-chevron">›</span>
+          </div>
+
+          <!-- Scrubber Progress -->
+          <div class="scrubber-section">
+            <div class="slider-wrapper">
+              <input type="range" id="seek-slider" min="0" max="100" value="0" step="0.1" />
+            </div>
+            <div class="time-row">
+              <span id="time-current">0:00</span>
+              <span id="quality-label" class="quality-label">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                  <path d="M12 3a9 9 0 0 0-9 9v7a3 3 0 0 0 3 3h1a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H5v-1a7 7 0 0 1 14 0v1h-2a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h1a3 3 0 0 0 3-3v-7a9 9 0 0 0-9-9z"/>
+                </svg>
+                <span>320k Audio</span>
+                <button id="btn-toggle-audio" class="audio-toggle-btn" title="Toggle Extension Audio Playback">
+                  <svg id="audio-icon-speaker" viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                  </svg>
+                </button>
+              </span>
+              <span id="time-remaining">-0:00</span>
+            </div>
+          </div>
+
+          <!-- Transport Controls Row -->
+          <div class="transport-row">
+            <button id="btn-prev" class="transport-btn skip-btn" title="Previous Track">
+              <svg viewBox="0 0 960 960" width="38" height="38" fill="currentColor" stroke="currentColor" stroke-width="60" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M872.74 732.51L503.18 480L872.74 227.49L872.74 732.51ZM456.82 732.51L87.26 480L456.82 227.49L456.82 732.51Z"/>
+              </svg>
+            </button>
+
+            <button id="btn-play-pause" class="transport-btn play-btn" title="Play / Pause">
+              <svg id="icon-play" viewBox="0 0 960 960" width="56" height="56" fill="currentColor">
+                <path d="M320 687L320 273c0-17 12-28.5 28-28.5 5 0 10.5 1.5 15.5 4.5l326 207c9 6 13.5 15 13.5 24s-4.5 18-13.5 24L363.5 711c-5 3-10.5 4.5-15.5 4.5-16 0-28-11.5-28-28.5z"/>
+              </svg>
+              <svg id="icon-pause" viewBox="0 0 960 960" width="52" height="52" fill="currentColor" class="hidden">
+                <path d="M595 720c-33 0-56.5-23.5-56.5-56.5v-320c0-33 23.5-56.5 56.5-56.5s56.5 23.5 56.5 56.5v320c0 33-23.5 56.5-56.5 56.5zm-230 0c-33 0-56.5-23.5-56.5-56.5v-320c0-33 23.5-56.5 56.5-56.5s56.5 23.5 56.5 56.5v320c0 33-23.5 56.5-56.5 56.5z"/>
+              </svg>
+            </button>
+
+            <button id="btn-next" class="transport-btn skip-btn" title="Next Track">
+              <svg viewBox="0 0 960 960" width="38" height="38" fill="currentColor" stroke="currentColor" stroke-width="60" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M85.93 732.51L85.93 227.49L455.49 480L85.93 732.51ZM505.18 732.51L505.18 227.49L874.74 480L505.18 732.51Z"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Bottom Action Row -->
+          <div class="bottom-action-row">
+            <button id="btn-nav-lyrics" class="bottom-glyph" title="Lyrics">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3.5h12c3 0 3 3 3 6v5.5c0 3-3 3-6 3H10l-4 3v-3c-3 0-3-3-3-6V9.5c0-3 3-6 6-6z" />
+                <path d="M7.6 8h3v3.1c0 2.1-2.5 2.6-2.5 2.6v-1.4c1.2-.3 1.2-1.3 1.2-1.3h-1.7V8zM12.8 8h3v3.1c0 2.1-2.5 2.6-2.5 2.6v-1.4c1.2-.3 1.2-1.3 1.2-1.3h-1.7V8z" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
+
+            <div class="party-pill-container">
+              <button id="btn-party-pill" class="output-party-pill" title="Listen Together Members">
+                <div class="pill-half pill-left">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M12 3a9 9 0 0 0-9 9v7a3 3 0 0 0 3 3h1a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H5v-1a7 7 0 0 1 14 0v1h-2a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h1a3 3 0 0 0 3-3v-7a9 9 0 0 0-9-9z"/>
+                  </svg>
+                </div>
+                <div class="pill-divider"></div>
+                <div class="pill-half pill-right">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  <span id="party-count" class="party-count">1</span>
+                </div>
+              </button>
+              <span id="party-sublabel" class="party-sublabel">Aneesh's Jam</span>
+            </div>
+
+            <button id="btn-nav-queue" class="bottom-glyph" title="Queue">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <circle cx="3.5" cy="6" r="1.5" fill="currentColor"></circle>
+                <circle cx="3.5" cy="12" r="1.5" fill="currentColor"></circle>
+                <circle cx="3.5" cy="18" r="1.5" fill="currentColor"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: FULL APPLE MUSIC LYRICS VIEW -->
+      <div id="screen-lyrics" class="screen-view hidden">
+        <div class="lyrics-sheet-header">
+          <div id="lyrics-drag-handle" class="drag-handle" title="Collapse lyrics"></div>
+          <div class="mini-player-bar">
+            <img id="mini-track-art" src="" alt="" class="mini-art-img" title="Tap to collapse" />
+            <div id="mini-track-info" class="mini-track-info" title="Tap to collapse">
+              <span id="mini-track-title" class="mini-title">Track Title</span>
+              <span id="mini-track-artist" class="mini-artist">Artist</span>
+            </div>
+            <div class="mini-actions">
+              <button id="mini-btn-favorite" class="circle-glyph action-disc" title="Favorite">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+              </button>
+              <button id="mini-btn-share" class="circle-glyph action-disc" title="Share">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/>
+                  <polyline points="16 6 12 2 8 6"/>
+                  <line x1="12" y1="2" x2="12" y2="15"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="lyrics-view-body">
+          <div id="lyrics-placeholder" class="lyrics-placeholder">
+            <p>Waiting for song playback…</p>
+          </div>
+          <am-lyrics
+            id="am-lyrics-player"
+            class="hidden"
+            font-family="SF Pro Display"
+            highlight-color="#ffffff"
+            autoscroll
+            interpolate
+            line-motion="staggered"
+          ></am-lyrics>
+        </div>
+      </div>
+
+      <!-- SCREEN 3: UPCOMING QUEUE VIEW -->
+      <div id="screen-queue" class="screen-view hidden">
+        <div class="sheet-header">
+          <div class="drag-handle"></div>
+          <div class="sheet-title-row">
+            <span class="sheet-title">Upcoming in Party</span>
+            <div class="sheet-header-actions">
+              <button id="btn-queue-clear" class="btn-text-danger">Clear</button>
+              <button id="btn-close-queue" class="circle-glyph small" title="Close Queue">✕</button>
+            </div>
+          </div>
+        </div>
+        <div id="queue-list" class="queue-list">
+          <div class="empty-state">Queue is empty</div>
+        </div>
+      </div>
+
+      <!-- SCREEN 4: LISTEN TOGETHER MEMBERS VIEW -->
+      <div id="screen-members" class="screen-view hidden">
+        <div class="sheet-header">
+          <div class="drag-handle"></div>
+          <div class="sheet-title-row">
+            <span class="sheet-title">Listen Together Party</span>
+            <button id="btn-close-members" class="circle-glyph small" title="Close">✕</button>
+          </div>
+        </div>
+        <div class="members-body">
+          <div class="party-info-card">
+            <div class="party-card-row">
+              <span class="party-card-title">Party Code</span>
+              <button id="btn-copy-code-card" class="code-pill" title="Click to copy invite link">
+                <span id="room-code-card-text" class="code-val">------</span>
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+            <div class="party-card-row">
+              <span class="party-card-sub">Server</span>
+              <span id="party-server-card-text" class="server-card-val">...</span>
+            </div>
+            <div class="party-card-row" style="margin-top: 10px;">
+              <button id="btn-leave-party" class="btn-danger-outline full-width" title="Leave Current Party">Leave Party</button>
+            </div>
+          </div>
+          <span class="members-section-title">Connected Devices</span>
+          <div id="members-list" class="members-list"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="{{AM_LYRICS_URI}}"></script>
+  <script src="{{APP_URI}}"></script>
+</body>
+</html>

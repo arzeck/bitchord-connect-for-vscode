@@ -1,0 +1,1632 @@
+/* BitChord Connect for VS Code - Apple Music & BitChord Native Design Language */
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('./fonts/sf_pro_display_regular.otf') format('opentype'),
+       url('./fonts/sf-pro-display/SFPRODISPLAYREGULAR.OTF') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('./fonts/sf_pro_display_medium.otf') format('opentype'),
+       url('./fonts/sf-pro-display/SFPRODISPLAYMEDIUM.OTF') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('./fonts/sf_pro_display_semibold.otf') format('opentype'),
+       url('./fonts/sf-pro-display/SFPRODISPLAYSEMIBOLDITALIC.OTF') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('./fonts/sf_pro_display_bold.otf') format('opentype'),
+       url('./fonts/sf-pro-display/SFPRODISPLAYBOLD.OTF') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('./fonts/sf_pro_display_heavy.otf') format('opentype'),
+       url('./fonts/sf-pro-display/SFPRODISPLAYHEAVYITALIC.OTF') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('./fonts/sf_pro_display_heavy.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+:root {
+  --bg-dark: #0a0810;
+  --bg-card: rgba(255, 255, 255, 0.08);
+  --bg-card-hover: rgba(255, 255, 255, 0.14);
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.22);
+
+  --accent-color: #8b5cf6;
+  --accent-glow: rgba(139, 92, 246, 0.45);
+  --accent-hover: #a78bfa;
+
+  --text-main: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-muted: rgba(255, 255, 255, 0.46);
+
+  --online-green: #10b981;
+  --checking-amber: #f59e0b;
+  --danger-red: #f43f5e;
+  --star-yellow: #fbbf24;
+
+  --font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+  --radius-pill: 9999px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  width: 100%;
+  min-width: 350px;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 1.4;
+  user-select: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ─── Ambient Blurred Artwork Backdrop ─────────────────────────────────────── */
+
+.ambient-backdrop {
+  position: fixed;
+  inset: -60px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(80px) saturate(2.2) brightness(0.92);
+  transform: scale(1.3);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s ease, background-image 0.9s ease;
+}
+
+.ambient-backdrop.active {
+  opacity: 1;
+}
+
+.ambient-overlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.22) 0%,
+    rgba(0, 0, 0, 0.28) 40%,
+    rgba(0, 0, 0, 0.38) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ─── App Container & Screens ───────────────────────────────────────────────── */
+
+.app-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-width: 350px;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.view-panel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen-view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.22s ease-out, transform 0.22s ease-out;
+  overflow: hidden;
+}
+
+.screen-view.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+/* ─── Global Error Banner ───────────────────────────────────────────────────── */
+
+.error-banner {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 100;
+  background: rgba(244, 63, 94, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: slideDown 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.error-icon {
+  font-size: 14px;
+}
+
+.error-message {
+  flex: 1;
+  word-break: break-word;
+  font-weight: 500;
+}
+
+.btn-dismiss {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 13px;
+  opacity: 0.8;
+  border-radius: 4px;
+}
+
+.btn-dismiss:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Offline View (Join / Create / Server Setup) ───────────────────────────── */
+
+#offline-view {
+  padding: 24px 16px 20px;
+  overflow-y: auto;
+  gap: 16px;
+}
+
+.hero-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 16px 8px 8px;
+}
+
+.logo-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.brand-svg {
+  width: 28px;
+  height: 28px;
+  color: #ffffff;
+}
+
+.hero-title {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: #ffffff;
+}
+
+.hero-subtitle {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.62);
+  margin-top: 4px;
+}
+
+/* Server Status Card */
+.server-status-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.server-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.server-health-indicator {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.server-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--checking-amber);
+}
+
+.server-dot.online {
+  background: var(--online-green);
+  box-shadow: 0 0 8px var(--online-green);
+}
+
+.server-dot.offline {
+  background: var(--danger-red);
+  box-shadow: 0 0 8px var(--danger-red);
+}
+
+.server-dot.checking {
+  background: var(--checking-amber);
+  animation: pulse-dot 1.4s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.server-health-text {
+  color: var(--text-secondary);
+}
+
+.server-url-display {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Local Server Card */
+.local-server-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.local-server-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.local-server-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+}
+
+.badge-tag.active {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+
+.local-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.instruct-line {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.code-copy-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.code-copy-box code {
+  flex: 1;
+  font-size: 11.5px;
+  color: #c4b5fd;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  word-break: break-all;
+}
+
+.instruct-sub {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.btn-small {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-main);
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-small:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-local {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-local:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.btn-tiny {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-tiny:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Join Card */
+.join-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input-label {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+input[type="text"] {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill);
+  padding: 11px 16px;
+  color: #ffffff;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+input[type="text"]:focus {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+}
+
+input[type="text"]::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+  letter-spacing: normal;
+  font-weight: 400;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn {
+  flex: 1;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.22);
+}
+
+.btn-primary:hover {
+  background: rgba(255, 255, 255, 0.92);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.35);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+.member-status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.member-status-dot.online {
+  background: var(--online-green);
+  box-shadow: 0 0 6px var(--online-green);
+}
+
+.member-status-dot.idle {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.advanced-settings {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.advanced-settings summary {
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0;
+}
+
+.settings-content {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.server-presets {
+  display: flex;
+  gap: 6px;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   SCREEN 1: NOW PLAYING MAIN PLAYER (BitChord Android Exact Replica)
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+#screen-player {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Floating Subtle Header (Does NOT push artwork down) */
+.room-header-floating {
+  display: none !important;
+}
+
+.code-pill-floating {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  cursor: pointer;
+  color: #ffffff;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-weight: 700;
+  opacity: 0.75;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.code-pill-floating:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.code-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+.header-right-floating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-badge-floating {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill);
+  padding: 4px 8px;
+  opacity: 0.75;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--online-green);
+  box-shadow: 0 0 6px var(--online-green);
+}
+
+.btn-leave-floating {
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-secondary);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  opacity: 0.75;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+
+.btn-leave-floating:hover {
+  opacity: 1;
+  color: var(--danger-red);
+  background: rgba(244, 63, 94, 0.25);
+}
+
+/* Full-Bleed Edge-to-Edge Hero Artwork (Matching LAAVAN) */
+.hero-art-section {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 200px;
+  max-height: 440px;
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+}
+
+.hero-art-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.hero-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  -webkit-mask-image: linear-gradient(180deg, #000000 55%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000000 55%, transparent 100%);
+}
+
+.hero-art-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.35;
+}
+
+/* Lower Deck Controls (Controls stand on ambient mesh) */
+.player-lower-deck {
+  padding: 0 16px 14px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+  gap: 2px;
+}
+
+/* Track Info & Circular Action Glyphs */
+.track-info-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.track-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.track-title {
+  font-size: 21px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.15;
+}
+
+.track-artist {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.68);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 3px;
+}
+
+.track-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Round Translucent Glyphs (.circle-glyph) */
+.circle-glyph {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(14px);
+  border: none;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.circle-glyph:hover {
+  background: rgba(255, 255, 255, 0.34);
+  transform: scale(1.06);
+}
+
+.circle-glyph:active {
+  transform: scale(0.92);
+}
+
+.circle-glyph.starred {
+  background: rgba(244, 63, 94, 0.88);
+  color: #ffffff;
+}
+
+.circle-glyph.small {
+  width: 34px;
+  height: 34px;
+}
+
+/* Live Lyric Teaser Bar (Exact LAAVAN subtitle match) */
+.live-lyric-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+  cursor: pointer;
+  margin: 4px 0 12px;
+  transition: opacity 0.15s;
+}
+
+.live-lyric-bar:hover .live-lyric-text {
+  color: #ffffff;
+}
+
+.live-lyric-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s;
+}
+
+.lyric-chevron {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1;
+  margin-left: 2px;
+}
+
+/* Scrubber Section (ThinSlider match from BitChord) */
+.scrubber-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.slider-wrapper {
+  position: relative;
+  width: 100%;
+  height: 16px;
+  display: flex;
+  align-items: center;
+}
+
+input[type="range"]#seek-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    #ffffff 0%,
+    #ffffff var(--seek-pct, 0%),
+    rgba(255, 255, 255, 0.25) var(--seek-pct, 0%),
+    rgba(255, 255, 255, 0.25) 100%
+  );
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+  transition: height 0.1s ease;
+}
+
+.slider-wrapper:hover input[type="range"]#seek-slider {
+  height: 6px;
+}
+
+/* In BitChord native, there is NO large protruding thumb ball */
+input[type="range"]#seek-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.slider-wrapper:hover input[type="range"]#seek-slider::-webkit-slider-thumb {
+  opacity: 1;
+  transform: scale(2);
+}
+
+.time-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  margin-top: 4px;
+}
+
+.quality-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  font-family: var(--font-family);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audio-toggle-btn {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-pill);
+  padding: 2px 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 10px;
+  font-family: var(--font-family);
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.audio-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.audio-toggle-btn.muted {
+  opacity: 0.45;
+}
+
+/* Transport Controls Row - Prominent, bold white vector glyphs */
+.transport-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  margin: 12px 0 18px;
+  padding: 0 8px;
+}
+
+.transport-btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.skip-btn {
+  width: 44px;
+  height: 44px;
+  opacity: 0.88;
+}
+
+.skip-btn:hover {
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+.skip-btn:active {
+  transform: scale(0.92);
+}
+
+.play-btn {
+  width: 60px;
+  height: 60px;
+  background: transparent;
+  color: #ffffff;
+  border-radius: 50%;
+  opacity: 0.98;
+}
+
+.play-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.play-btn:active {
+  transform: scale(0.94);
+}
+
+/* Bottom Action Row (Lyrics, OutputPartyPill, Queue) */
+.bottom-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 2px;
+  margin-top: auto;
+}
+
+.bottom-glyph {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bottom-glyph:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.08);
+}
+
+.bottom-glyph:active {
+  transform: scale(0.92);
+}
+
+.bottom-glyph.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.party-pill-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+/* OutputPartyPill (Signature BitChord Capsule) */
+.output-party-pill {
+  height: 44px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: #ffffff;
+  overflow: hidden;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.output-party-pill:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.output-party-pill:active {
+  transform: translateY(1px);
+}
+
+.output-party-pill.active {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.pill-half {
+  height: 100%;
+  min-width: 62px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 13.5px;
+  font-weight: 700;
+  transition: background 0.15s;
+}
+
+.pill-half.pill-right {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.pill-divider {
+  width: 1px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.party-sublabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.2px;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  margin-top: 5px;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   SCREEN 2: FULL APPLE MUSIC LYRICS VIEW (Image 2 Replica)
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+#screen-lyrics {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px 0;
+  background: transparent;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.drag-handle {
+  width: 36px;
+  height: 4.5px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.35);
+  margin: 4px auto 14px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.drag-handle:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: scaleY(1.2);
+}
+
+.lyrics-sheet-header {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.mini-player-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 0 12px 0;
+  user-select: none;
+}
+
+.mini-art-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.mini-art-img:hover {
+  transform: scale(1.03);
+}
+
+.mini-track-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.mini-title {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-artist {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.62);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.mini-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.circle-glyph.action-disc,
+.circle-glyph.red-disc {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s, background-color 0.15s, border-color 0.15s, color 0.15s;
+  padding: 0;
+}
+
+.circle-glyph.action-disc:hover,
+.circle-glyph.red-disc:hover {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.06);
+}
+
+.circle-glyph.action-disc:active,
+.circle-glyph.red-disc:active {
+  transform: scale(0.95);
+}
+
+.circle-glyph.action-disc.starred,
+.circle-glyph.red-disc.starred {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fbbf24;
+}
+
+.lyrics-view-body {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0px,
+    rgba(0, 0, 0, 0.15) 15px,
+    rgba(0, 0, 0, 0.65) 35px,
+    #000000 65px,
+    #000000 calc(100% - 40px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0px,
+    rgba(0, 0, 0, 0.15) 15px,
+    rgba(0, 0, 0, 0.65) 35px,
+    #000000 65px,
+    #000000 calc(100% - 40px),
+    transparent 100%
+  );
+}
+
+.lyrics-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Apple Music word-by-word karaoke styling */
+#am-lyrics-player {
+  width: 100%;
+  height: 100%;
+  --am-lyrics-compact-font-size: 32px;
+  --am-lyrics-wide-font-size: 40px;
+  --am-lyrics-compact-line-spacing: 24px;
+  --am-lyrics-line-height: 1.2;
+  --am-lyrics-highlight-color: #ffffff;
+  --am-lyrics-inline-padding: 4px;
+  --lyrics-scroll-padding-top: 70px;
+  --am-lyrics-compact-selected-position: 70px;
+  --am-lyrics-glow-radius: 6px;
+  --am-lyrics-progression-feather: 30px;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-weight: 800 !important;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   SCREEN 3 & 4: FLOATING GLASS SHEETS (Upcoming Queue & Members)
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+.sheet-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sheet-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sheet-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+}
+
+.sheet-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-text-danger {
+  background: transparent;
+  border: none;
+  color: var(--danger-red);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.btn-text-danger:hover {
+  background: rgba(244, 63, 94, 0.15);
+}
+
+.btn-danger-outline {
+  background: rgba(244, 63, 94, 0.14);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #fb7185;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn-danger-outline:hover {
+  background: rgba(244, 63, 94, 0.28);
+  border-color: #f43f5e;
+  color: #ffffff;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Queue List */
+.queue-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.queue-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.queue-item.current-track {
+  border-color: var(--accent-color);
+  background: rgba(139, 92, 246, 0.18);
+}
+
+.queue-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.queue-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-title {
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-artist {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.queue-actions {
+  display: flex;
+}
+
+.queue-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.queue-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Members View */
+.members-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.party-info-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.party-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.party-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.party-card-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.server-card-val {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  max-width: 170px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.members-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary);
+  padding: 2px 2px 0;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.member-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.host-tag {
+  font-size: 9px;
+  font-weight: 700;
+  background: rgba(251, 191, 36, 0.25);
+  color: #fbbf24;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.member-status {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 28px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
