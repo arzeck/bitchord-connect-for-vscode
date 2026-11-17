@@ -2,3 +2,5 @@ node_modules/
 temp_am_lyrics/
 dist/
 test/*.cjs
+
+.vscode/
